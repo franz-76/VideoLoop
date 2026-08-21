@@ -1,0 +1,20 @@
+[Unit]
+Description=Videoloop kiosk (cvlc in loop su /opt/media_optimized)
+After=led-daemon.service network-online.target sound.target
+Wants=led-daemon.service
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=san
+Group=san
+WorkingDirectory=/opt/videoloop
+ExecStart=/opt/videoloop/videoloop.sh
+ExecStopPost=/usr/local/bin/led-vlc-stop-hook.sh
+Restart=always
+RestartSec=2
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,43 @@
+#!/bin/bash
+# CLI per impostare/rimuovere uno stato del LED.
+#   led-ctl set <nome> <priorita> <pattern> [arg]
+#   led-ctl clear <nome>
+#   led-ctl list
+set -eu
+
+STATE_DIR=/run/led/state.d
+mkdir -p "$STATE_DIR"
+
+usage() {
+    echo "Uso:"
+    echo "  led-ctl set <nome> <priorita> <pattern> [arg]"
+    echo "    pattern: off | solid | blink <half_ms> | pulse <period_ms> | double | code <N>"
+    echo "  led-ctl clear <nome>"
+    echo "  led-ctl list"
+    exit 1
+}
+
+[ $# -ge 1 ] || usage
+
+case "$1" in
+    set)
+        [ $# -eq 4 ] || [ $# -eq 5 ] || usage
+        name=$2 prio=$3 pattern=$4 arg=${5:-0}
+        case "$name" in */*|.|"") echo "nome stato non valido" >&2; exit 1 ;; esac
+        echo "$prio $pattern $arg" > "$STATE_DIR/$name.tmp"
+        mv "$STATE_DIR/$name.tmp" "$STATE_DIR/$name"
+        ;;
+    clear)
+        [ $# -eq 2 ] || usage
+        rm -f "$STATE_DIR/$2"
+        ;;
+    list)
+        for f in "$STATE_DIR"/*; do
+            [ -f "$f" ] || continue
+            printf "%-20s %s\n" "$(basename "$f")" "$(cat "$f")"
+        done
+        ;;
+    *)
+        usage
+        ;;
+esac

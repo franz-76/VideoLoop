@@ -1,0 +1,46 @@
+# Unit systemd per VLC in kiosk, con LED gia' integrato.
+# Sostituisce lo script "esecutore in loop" + watchdog cron:
+# - il loop sulla cartella lo fa ancora il TUO script (ExecStart sotto),
+#   ma SENZA una sua logica di "riavvia se muore": ci pensa Restart=always.
+# - il watchdog cron va rimosso (crontab -e, elimina la riga) DOPO aver
+#   verificato che questo servizio funziona: se restano entrambi attivi,
+#   rischi due processi VLC indipendenti in competizione su audio/video.
+#
+# Copia in /etc/systemd/system/vlc-player.service (rinomina se preferisci
+# un altro nome, es. vlc-kiosk.service — basta essere coerenti ovunque)
+# e adatta le righe segnate con "<-- ADATTA".
+
+[Unit]
+Description=VLC kiosk player (loop cartella media)
+After=led-daemon.service network-online.target sound.target
+Wants=led-daemon.service
+# Se l'uscita video passa da un desktop X11 invece che DRM/framebuffer diretto:
+# After=graphical.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=pi                                   # <-- ADATTA: utente che oggi lancia VLC da cron
+Group=pi
+WorkingDirectory=/home/pi/media           # <-- ADATTA: cartella media
+
+# <-- ADATTA: punta al TUO script "esecutore in loop", ripulito da ogni
+# logica propria di retry/riavvio-se-crashato (la fa Restart= qui sotto).
+# Se lo script attuale e' solo un wrapper attorno a `cvlc --loop cartella/`,
+# puoi anche sostituirlo con la chiamata diretta a cvlc, es.:
+#   ExecStart=/usr/bin/cvlc --fullscreen --no-osd --loop /home/pi/media
+ExecStart=/usr/local/bin/vlc-run.sh
+
+ExecStartPre=/usr/local/bin/led-vlc-start-hook.sh
+ExecStopPost=/usr/local/bin/led-vlc-stop-hook.sh
+
+Restart=always
+RestartSec=2
+
+# Se l'audio passa da PulseAudio/Pipewire dell'utente e il servizio non lo
+# trova, di solito serve:
+# Environment=XDG_RUNTIME_DIR=/run/user/1000
+
+[Install]
+WantedBy=multi-user.target

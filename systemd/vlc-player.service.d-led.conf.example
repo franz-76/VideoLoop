@@ -1,0 +1,16 @@
+# Esempio di override da installare come drop-in del TUO servizio VLC.
+# Il nome file/cartella deve rispecchiare l'unit reale, es. se il servizio si
+# chiama "vlc-kiosk.service" questo file va copiato in:
+#   /etc/systemd/system/vlc-kiosk.service.d/led.conf
+# e poi: systemctl daemon-reload && systemctl restart vlc-kiosk.service
+#
+# Se il servizio VLC non ha ancora un Requires/After su led-daemon, aggiungilo
+# qui cosi' il led-daemon e' sempre gia' attivo quando VLC parte.
+
+[Unit]
+After=led-daemon.service
+Wants=led-daemon.service
+
+[Service]
+ExecStartPre=/usr/local/bin/led-vlc-start-hook.sh
+ExecStopPost=/usr/local/bin/led-vlc-stop-hook.sh

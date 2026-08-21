@@ -1,0 +1,16 @@
+#!/bin/bash
+# Dispatcher script NetworkManager: chiamato ad ogni cambio di stato di
+# un'interfaccia con argomenti "$1"=interfaccia "$2"=evento.
+IFACE="$1"
+STATUS="$2"
+
+[ "$IFACE" = "wlan0" ] || exit 0
+
+case "$STATUS" in
+    up)
+        /usr/local/bin/led-ctl clear wifi-down
+        ;;
+    down|unavailable)
+        /usr/local/bin/led-ctl set wifi-down 100 code 1
+        ;;
+esac

@@ -1,0 +1,18 @@
+# Copiare in /etc/udev/rules.d/99-videoloop-hotplug.rules
+#
+# Il kernel emette un uevent "change" sul device DRM ad ogni variazione di
+# hotplug (connessione/disconnessione del monitor), lo stesso meccanismo che
+# usano X/Wayland per accorgersene senza fare polling. Lo intercettiamo per
+# forzare un riavvio pulito di videoloop.service ad ogni transizione, invece
+# di fare affidamento sul fatto che cvlc si accorga da solo di una
+# disconnessione/riconnessione live e si riprenda correttamente:
+# - se il monitor si disconnette: il riavvio riporta lo script nello stato
+#   di attesa (wait_for_display in videoloop.sh), pulito;
+# - se il monitor si riconnette: il riavvio fa ripartire cvlc da zero contro
+#   il display ora disponibile, invece di sperare in un recupero interno.
+#
+# try-restart = non fa nulla se il servizio non e' gia' attivo (es. e' gia'
+# in attesa perche' non ha mai avuto un monitor collegato: in quel caso non
+# serve alcun riavvio, wait_for_display se ne accorgera' da solo al prossimo
+# poll entro 2s).
+SUBSYSTEM=="drm", ACTION=="change", RUN+="/usr/bin/systemctl try-restart videoloop.service"

@@ -1,0 +1,9 @@
+Aggiungi questa riga in /etc/pam.d/sshd (in fondo al file, dopo le righe
+"session" esistenti — non sostituire nulla, solo aggiungere):
+
+session optional pam_exec.so /usr/local/bin/led-ssh-hook.sh
+
+Non serve riavviare sshd: pam_exec viene letto ad ogni nuova sessione.
+Verifica dopo l'installazione con un login SSH di prova e:
+  led-ctl list
+che deve mostrare la riga "ssh   70 cyan solid".

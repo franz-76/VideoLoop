@@ -1,0 +1,16 @@
+[Unit]
+Description=LED di stato (RGB dietro al logo)
+After=local-fs.target
+Before=multi-user.target
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/systemd-tmpfiles --create /etc/tmpfiles.d/led.conf
+ExecStart=/usr/local/bin/led-daemon.sh
+Restart=always
+RestartSec=1
+TimeoutStopSec=5
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target
